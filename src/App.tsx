@@ -109,11 +109,7 @@ export const App: React.FC = () => {
   };
 
   const handleToggleAll = () => {
-    if (
-      loadingTodoIds.length > 0 ||
-      loadingAdd ||
-      todos.length === 0
-    ) {
+    if (loadingTodoIds.length > 0 || loadingAdd || todos.length === 0) {
       return;
     }
 
@@ -325,8 +321,7 @@ export const App: React.FC = () => {
     setFilter(newFilter);
   };
 
-  const allCompleted =
-    todos.length > 0 && todos.every(todo => todo.completed);
+  const allCompleted = todos.length > 0 && todos.every(todo => todo.completed);
 
   return (
     <div className="todoapp">
@@ -342,9 +337,7 @@ export const App: React.FC = () => {
             data-cy="ToggleAllButton"
             onClick={handleToggleAll}
             disabled={
-              loadingTodoIds.length > 0 ||
-              loadingAdd ||
-              todos.length === 0
+              loadingTodoIds.length > 0 || loadingAdd || todos.length === 0
             }
           />
 
