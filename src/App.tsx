@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import cn from 'classnames';
 
 import { UserWarning } from './UserWarning';
@@ -32,6 +32,8 @@ export const App: React.FC = () => {
 
   const [loadingTodoIds, setLoadingTodoIds] = useState<number[]>([]);
   const [loadingAdd, setLoadingAdd] = useState(false);
+
+  const newTodoFieldRef = useRef<HTMLInputElement>(null);
 
   const showError = (message: string) => {
     setError(message);
@@ -95,7 +97,7 @@ export const App: React.FC = () => {
         setTodos(currentTodos =>
           currentTodos.map(currentTodo =>
             currentTodo.id === todo.id
-              ? { ...currentTodo, completed: !currentTodo.completed }
+              ? { ...currentTodo, completed: !todo.completed }
               : currentTodo,
           ),
         );
@@ -181,9 +183,7 @@ export const App: React.FC = () => {
         setLoadingAdd(false);
 
         setTimeout(() => {
-          document
-            .querySelector<HTMLInputElement>('[data-cy="NewTodoField"]')
-            ?.focus();
+          newTodoFieldRef.current?.focus();
         }, 0);
       });
   };
@@ -270,9 +270,7 @@ export const App: React.FC = () => {
         removeLoadingTodoId(todo.id);
 
         setTimeout(() => {
-          document
-            .querySelector<HTMLInputElement>('[data-cy="NewTodoField"]')
-            ?.focus();
+          newTodoFieldRef.current?.focus();
         }, 0);
       });
   };
@@ -293,22 +291,27 @@ export const App: React.FC = () => {
     hideError();
     setLoadingTodoIds(completedIds);
 
-    Promise.all(completedTodos.map(todo => deleteTodos(todo)))
-      .then(() => {
+    Promise.allSettled(completedTodos.map(todo => deleteTodos(todo)))
+      .then(results => {
+        const successfullyDeletedIds = completedTodos
+          .filter((_, index) => results[index].status === 'fulfilled')
+          .map(todo => todo.id);
+
         setTodos(currentTodos =>
-          currentTodos.filter(todo => !completedIds.includes(todo.id)),
+          currentTodos.filter(
+            todo => !successfullyDeletedIds.includes(todo.id),
+          ),
         );
-      })
-      .catch(() => {
-        showError('Unable to delete a todo');
+
+        if (successfullyDeletedIds.length !== completedTodos.length) {
+          showError('Unable to delete a todo');
+        }
       })
       .finally(() => {
         setLoadingTodoIds([]);
 
         setTimeout(() => {
-          document
-            .querySelector<HTMLInputElement>('[data-cy="NewTodoField"]')
-            ?.focus();
+          newTodoFieldRef.current?.focus();
         }, 0);
       });
   };
@@ -346,6 +349,7 @@ export const App: React.FC = () => {
             setTitle={setTitle}
             handleSubmit={handleSubmit}
             loadingAdd={loadingAdd}
+            inputRef={newTodoFieldRef}
           />
         </header>
 
